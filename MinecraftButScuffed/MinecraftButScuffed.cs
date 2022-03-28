@@ -2,62 +2,61 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MinecraftButScuffed.Rendering;
-using IDrawable = MinecraftButScuffed.Rendering.IDrawable;
 
 namespace MinecraftButScuffed;
 
 public class MinecraftButScuffed : Game
 {
-    public GraphicsDeviceManager Graphics;
-    public SpriteBatch SpriteBatch;
-    public UiManager UiManager;
-    public readonly SortedList<int, IDrawable> Drawables = new();
+    private readonly GraphicsDeviceManager _graphics;
+    private SpriteBatch _spriteBatch;
+    private readonly SortedList<int, IContentLoader> _contentLoaders = new();
+    private GameManager _gameManager;
 
     public MinecraftButScuffed()
     {
-        Graphics = new GraphicsDeviceManager(this);
+        Components.ComponentAdded += ComponentAdded;
+        _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
+        _gameManager = new GameManager(this);
     }
 
     protected override void Initialize()
     {
-        Components.ComponentAdded += ComponentAdded;
-        UiManager = new UiManager(this);
+        var graphicsDeviceViewport = _graphics.GraphicsDevice.Viewport;
         
-        var graphicsDeviceViewport = Graphics.GraphicsDevice.Viewport;
         graphicsDeviceViewport.Width = 854;
         graphicsDeviceViewport.Height = 480;
-        Graphics.GraphicsDevice.Viewport = graphicsDeviceViewport;
-        Graphics.PreferredBackBufferWidth = graphicsDeviceViewport.Width;
-        Graphics.PreferredBackBufferHeight = graphicsDeviceViewport.Height;
-        Graphics.ApplyChanges();
+        
+        _graphics.GraphicsDevice.Viewport = graphicsDeviceViewport;
+        _graphics.PreferredBackBufferWidth = graphicsDeviceViewport.Width;
+        _graphics.PreferredBackBufferHeight = graphicsDeviceViewport.Height;
+        _graphics.ApplyChanges();
 
         base.Initialize();
     }
 
     private void ComponentAdded(object sender, GameComponentCollectionEventArgs e)
     {
-        if (e.GameComponent is IDrawable drawable)
-            Drawables.Add(drawable.DrawOrder, drawable);
+        if (e.GameComponent is IContentLoader loader)
+            _contentLoaders.Add(loader.LoadContentOrder, loader);
     }
 
     protected override void LoadContent()
     {
-        SpriteBatch = new SpriteBatch(GraphicsDevice);
-        Services.AddService(SpriteBatch);
-        UiManager.LoadContent(SpriteBatch);
+        _spriteBatch = new SpriteBatch(GraphicsDevice);
+        Services.AddService(_spriteBatch);
+        
+        foreach (var loader in _contentLoaders.Values)
+            loader.LoadContent(_spriteBatch);
+        
+        base.LoadContent();
     }
 
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-
-        foreach (var drawable in Drawables)
-        {
-            drawable.Value.Draw(gameTime);
-        }
         
         base.Draw(gameTime);
     }
