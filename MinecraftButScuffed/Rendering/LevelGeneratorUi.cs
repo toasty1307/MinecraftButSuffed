@@ -27,7 +27,7 @@ public class LevelGeneratorUi : DrawableGameComponent
 
     protected override void LoadContent()
     {
-        _spriteBatch = spriteBatch;
+        _spriteBatch = Game.Services.GetService<SpriteBatch>();
         _dirt = Game.Content.Load<Texture2D>("dirt");
         _font = Game.Content.Load<SpriteFont>("MinecraftFont");
         _whiteRectangle = new Texture2D(Game.GraphicsDevice, 200, 4);
@@ -37,7 +37,7 @@ public class LevelGeneratorUi : DrawableGameComponent
     public override void Draw(GameTime gameTime)
     {
         if (_gameManager.CurrentGameState != GameState.GeneratingLevel) return;
-
+        
         var width = Game.GraphicsDevice.Viewport.Width;
         var height = Game.GraphicsDevice.Viewport.Height;
         var numY = 8;

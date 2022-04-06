@@ -1,20 +1,18 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MinecraftButScuffed.Rendering;
 
 namespace MinecraftButScuffed;
 
 public class MinecraftButScuffed : Game
 {
+    public List<DrawableGameComponent> DrawThings = new();
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-    private readonly SortedList<int, IContentLoader> _contentLoaders = new();
     private GameManager _gameManager;
 
     public MinecraftButScuffed()
     {
-        Components.ComponentAdded += ComponentAdded;
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -33,14 +31,10 @@ public class MinecraftButScuffed : Game
         _graphics.PreferredBackBufferWidth = graphicsDeviceViewport.Width;
         _graphics.PreferredBackBufferHeight = graphicsDeviceViewport.Height;
         _graphics.ApplyChanges();
-
+        
         base.Initialize();
-    }
-
-    private void ComponentAdded(object sender, GameComponentCollectionEventArgs e)
-    {
-        if (e.GameComponent is IContentLoader loader)
-            _contentLoaders.Add(loader.LoadContentOrder, loader);
+        
+        DrawThings.ForEach(d => d.Initialize());
     }
 
     protected override void LoadContent()
@@ -48,15 +42,17 @@ public class MinecraftButScuffed : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         Services.AddService(_spriteBatch);
         
-        foreach (var loader in _contentLoaders.Values)
-            loader.LoadContent(_spriteBatch);
-        
         base.LoadContent();
     }
 
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
+
+        foreach (var drawableGameComponent in DrawThings)
+        {
+            drawableGameComponent.Draw(gameTime);
+        }
         
         base.Draw(gameTime);
     }
